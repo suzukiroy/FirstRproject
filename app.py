@@ -3,7 +3,7 @@ import base64
 import sqlite3
 import json
 from datetime import date
-from flask import Flask, request, jsonify, render_template, g
+from flask import Flask, request, jsonify, render_template, g, send_from_directory
 from anthropic import Anthropic
 
 app = Flask(__name__)
@@ -46,6 +46,14 @@ def init_db():
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/static/sw.js")
+def service_worker():
+    response = send_from_directory("static", "sw.js")
+    response.headers["Content-Type"] = "application/javascript"
+    response.headers["Service-Worker-Allowed"] = "/"
+    return response
 
 
 @app.route("/analyze", methods=["POST"])
