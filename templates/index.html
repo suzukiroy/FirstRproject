@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#22c55e">
+<title>食材フォトログ</title>
+<style>
+  :root {
+    --green: #22c55e;
+    --green-dark: #16a34a;
+    --green-light: #dcfce7;
+    --red: #ef4444;
+    --gray: #6b7280;
+    --gray-light: #f3f4f6;
+    --border: #e5e7eb;
+    --shadow: 0 1px 3px rgba(0,0,0,.1);
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; }
+
+  /* Header */
+  header { background: var(--green); color: #fff; padding: 16px 20px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(34,197,94,.3); }
+  header svg { width: 28px; height: 28px; flex-shrink: 0; }
+  header h1 { font-size: 1.2rem; font-weight: 700; }
+
+  /* Tabs */
+  .tabs { display: flex; background: #fff; border-bottom: 1px solid var(--border); position: sticky; top: 60px; z-index: 99; }
+  .tab { flex: 1; padding: 14px; text-align: center; font-size: .9rem; font-weight: 600; color: var(--gray); cursor: pointer; border-bottom: 3px solid transparent; transition: .2s; }
+  .tab.active { color: var(--green-dark); border-bottom-color: var(--green); }
+
+  /* Panels */
+  .panel { display: none; padding: 20px; max-width: 600px; margin: 0 auto; }
+  .panel.active { display: block; }
+
+  /* Camera area */
+  .upload-area { border: 2px dashed var(--border); border-radius: var(--radius); text-align: center; padding: 32px 20px; background: #fff; cursor: pointer; transition: .2s; position: relative; }
+  .upload-area:hover { border-color: var(--green); background: var(--green-light); }
+  .upload-area input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-area svg { width: 48px; height: 48px; color: var(--green); margin-bottom: 12px; }
+  .upload-area p { color: var(--gray); font-size: .9rem; }
+  .upload-area strong { color: var(--green-dark); font-size: 1rem; display: block; margin-bottom: 6px; }
+
+  #preview-wrap { display: none; margin-top: 16px; }
+  #preview-wrap img { width: 100%; border-radius: var(--radius); max-height: 300px; object-fit: cover; }
+
+  /* Buttons */
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px; border: none; border-radius: var(--radius); font-size: 1rem; font-weight: 600; cursor: pointer; transition: .2s; margin-top: 12px; }
+  .btn-primary { background: var(--green); color: #fff; }
+  .btn-primary:hover { background: var(--green-dark); }
+  .btn-primary:disabled { background: #94d3a2; cursor: not-allowed; }
+  .btn-secondary { background: var(--gray-light); color: #374151; }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-danger { background: #fee2e2; color: var(--red); }
+  .btn-danger:hover { background: #fecaca; }
+  .btn-sm { padding: 6px 12px; font-size: .8rem; width: auto; margin: 0; }
+
+  /* Date input */
+  .date-row { display: flex; align-items: center; gap: 10px; margin-top: 16px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; }
+  .date-row label { font-size: .85rem; font-weight: 600; color: var(--gray); white-space: nowrap; }
+  .date-row input[type=date] { border: none; font-size: .95rem; flex: 1; outline: none; color: #1e293b; }
+
+  /* Spinner */
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Ingredient list */
+  .section-title { font-size: .85rem; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .05em; margin: 20px 0 10px; }
+  .ingredient-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px; display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; }
+  .ingredient-card .name-input { border: none; font-size: 1rem; font-weight: 600; color: #1e293b; outline: none; width: 100%; background: transparent; }
+  .ingredient-card .qty-row { display: flex; gap: 6px; align-items: center; grid-column: 1 / -1; }
+  .ingredient-card input[type=number] { width: 80px; border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: .9rem; }
+  .ingredient-card .unit-input { border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: .9rem; width: 70px; }
+  .del-btn { background: none; border: none; cursor: pointer; color: #cbd5e1; padding: 4px; line-height: 1; }
+  .del-btn:hover { color: var(--red); }
+  .add-row { display: flex; gap: 8px; margin-top: 6px; }
+  .add-row input { flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: .9rem; outline: none; }
+  .add-row input:focus { border-color: var(--green); }
+
+  /* History */
+  .history-date-group { margin-bottom: 20px; }
+  .history-date-label { font-size: .85rem; font-weight: 700; color: var(--gray); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .history-date-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .history-item { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; }
+  .history-item .info { flex: 1; }
+  .history-item .name { font-weight: 600; font-size: .95rem; }
+  .history-item .meta { font-size: .82rem; color: var(--gray); margin-top: 2px; }
+  .history-item .del-btn { color: #d1d5db; }
+
+  /* Toast */
+  #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px); background: #1e293b; color: #fff; padding: 12px 20px; border-radius: 100px; font-size: .9rem; font-weight: 500; transition: .3s; z-index: 1000; white-space: nowrap; opacity: 0; }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.error { background: var(--red); }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 48px 20px; color: var(--gray); }
+  .empty svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: .4; }
+
+  /* API key warning */
+  .api-warn { background: #fff7ed; border: 1px solid #fed7aa; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px; font-size: .88rem; color: #9a3412; }
+  .api-warn strong { display: block; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+    <polyline points="9 22 9 12 15 12 15 22"/>
+  </svg>
+  <h1>食材フォトログ</h1>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('record')">
+    <svg style="width:16px;height:16px;vertical-align:middle;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
+    記録する
+  </div>
+  <div class="tab" onclick="switchTab('history')">
+    <svg style="width:16px;height:16px;vertical-align:middle;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4.5"/><polyline points="3 3 3 8 8 8"/></svg>
+    履歴
+  </div>
+</div>
+
+<!-- 記録パネル -->
+<div class="panel active" id="panel-record">
+
+  <div id="api-key-warning" class="api-warn" style="display:none">
+    <strong>⚠️ ANTHROPIC_API_KEY が設定されていません</strong>
+    環境変数 <code>ANTHROPIC_API_KEY</code> を設定してからサーバーを再起動してください。
+  </div>
+
+  <label class="upload-area" id="upload-area">
+    <input type="file" accept="image/*" capture="environment" id="file-input" onchange="onFileSelect(this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </svg>
+    <strong>写真を撮影 / 選択</strong>
+    <p>スマホカメラまたはファイルから選択</p>
+  </label>
+
+  <div id="preview-wrap">
+    <img id="preview-img" src="" alt="プレビュー">
+    <button class="btn btn-primary" id="analyze-btn" onclick="analyzeImage()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      食材を解析する
+    </button>
+    <button class="btn btn-secondary" onclick="resetUpload()">やり直す</button>
+  </div>
+
+  <div class="date-row">
+    <label>📅 日付</label>
+    <input type="date" id="record-date">
+  </div>
+
+  <div id="ingredients-section" style="display:none">
+    <p class="section-title">検出された食材（編集可）</p>
+    <div id="ingredient-list"></div>
+    <div class="add-row">
+      <input type="text" id="new-ingredient-name" placeholder="食材を追加..." onkeydown="if(event.key==='Enter')addIngredient()">
+      <button class="btn btn-secondary btn-sm" onclick="addIngredient()">追加</button>
+    </div>
+    <button class="btn btn-primary" onclick="saveRecords()" style="margin-top:16px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      保存する
+    </button>
+  </div>
+</div>
+
+<!-- 履歴パネル -->
+<div class="panel" id="panel-history">
+  <div id="history-content">
+    <div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4.5"/><polyline points="3 3 3 8 8 8"/></svg>
+      <p>まだ記録がありません</p>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let selectedFile = null;
+let ingredients = [];
+
+// 今日の日付をセット
+document.getElementById('record-date').value = new Date().toISOString().slice(0,10);
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0) === (tab==='record')));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  if (tab === 'history') loadHistory();
+}
+
+function onFileSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  selectedFile = file;
+  const url = URL.createObjectURL(file);
+  document.getElementById('preview-img').src = url;
+  document.getElementById('preview-wrap').style.display = 'block';
+  document.getElementById('upload-area').style.display = 'none';
+  document.getElementById('ingredients-section').style.display = 'none';
+  ingredients = [];
+}
+
+function resetUpload() {
+  selectedFile = null;
+  document.getElementById('file-input').value = '';
+  document.getElementById('preview-wrap').style.display = 'none';
+  document.getElementById('upload-area').style.display = '';
+  document.getElementById('ingredients-section').style.display = 'none';
+  document.getElementById('preview-img').src = '';
+  ingredients = [];
+}
+
+async function analyzeImage() {
+  if (!selectedFile) return;
+  const btn = document.getElementById('analyze-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 解析中...';
+
+  try {
+    const form = new FormData();
+    form.append('image', selectedFile);
+    const res = await fetch('/analyze', { method: 'POST', body: form });
+    const data = await res.json();
+
+    if (data.error) {
+      showToast(data.error, true);
+      return;
+    }
+
+    ingredients = data.ingredients || [];
+    renderIngredients();
+    document.getElementById('ingredients-section').style.display = 'block';
+    if (ingredients.length === 0) {
+      showToast('食材が検出されませんでした。手動で追加してください。');
+    }
+  } catch(e) {
+    showToast('解析に失敗しました: ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> 食材を解析する';
+  }
+}
+
+function renderIngredients() {
+  const list = document.getElementById('ingredient-list');
+  list.innerHTML = '';
+  ingredients.forEach((item, i) => {
+    const card = document.createElement('div');
+    card.className = 'ingredient-card';
+    card.innerHTML = `
+      <input class="name-input" value="${esc(item.name)}" oninput="ingredients[${i}].name=this.value" placeholder="食材名">
+      <button class="del-btn" onclick="removeIngredient(${i})" title="削除">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div class="qty-row">
+        <input type="number" min="0" step="0.1" value="${item.quantity ?? ''}" oninput="ingredients[${i}].quantity=this.value?parseFloat(this.value):null" placeholder="量">
+        <input class="unit-input" value="${esc(item.unit||'')}" oninput="ingredients[${i}].unit=this.value" placeholder="単位">
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function removeIngredient(i) {
+  ingredients.splice(i, 1);
+  renderIngredients();
+}
+
+function addIngredient() {
+  const input = document.getElementById('new-ingredient-name');
+  const name = input.value.trim();
+  if (!name) return;
+  ingredients.push({ name, quantity: null, unit: '' });
+  renderIngredients();
+  input.value = '';
+}
+
+async function saveRecords() {
+  if (ingredients.length === 0) { showToast('食材がありません', true); return; }
+  const validItems = ingredients.filter(i => i.name.trim());
+  if (validItems.length === 0) { showToast('食材名を入力してください', true); return; }
+
+  const recordDate = document.getElementById('record-date').value;
+  try {
+    const res = await fetch('/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date: recordDate, ingredients: validItems })
+    });
+    const data = await res.json();
+    if (data.error) { showToast(data.error, true); return; }
+    showToast(`${data.saved}件の食材を保存しました！`);
+    resetUpload();
+    document.getElementById('ingredients-section').style.display = 'none';
+    ingredients = [];
+  } catch(e) {
+    showToast('保存に失敗しました', true);
+  }
+}
+
+async function loadHistory() {
+  try {
+    const res = await fetch('/history');
+    const records = await res.json();
+    renderHistory(records);
+  } catch(e) {
+    document.getElementById('history-content').innerHTML = '<div class="empty"><p>読み込みに失敗しました</p></div>';
+  }
+}
+
+function renderHistory(records) {
+  const el = document.getElementById('history-content');
+  if (!records.length) {
+    el.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4.5"/><polyline points="3 3 3 8 8 8"/></svg><p>まだ記録がありません</p></div>';
+    return;
+  }
+
+  // 日付でグループ化
+  const groups = {};
+  records.forEach(r => {
+    if (!groups[r.record_date]) groups[r.record_date] = [];
+    groups[r.record_date].push(r);
+  });
+
+  el.innerHTML = '';
+  Object.keys(groups).sort().reverse().forEach(dateKey => {
+    const group = document.createElement('div');
+    group.className = 'history-date-group';
+    const label = document.createElement('div');
+    label.className = 'history-date-label';
+    label.textContent = formatDate(dateKey);
+    group.appendChild(label);
+
+    groups[dateKey].forEach(r => {
+      const item = document.createElement('div');
+      item.className = 'history-item';
+      const qty = r.quantity != null ? `${r.quantity}${r.unit || ''}` : (r.unit || '不明');
+      item.innerHTML = `
+        <div class="info">
+          <div class="name">${esc(r.ingredient)}</div>
+          <div class="meta">${qty}</div>
+        </div>
+        <button class="del-btn" onclick="deleteRecord(${r.id}, this)" title="削除">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
+      `;
+      group.appendChild(item);
+    });
+    el.appendChild(group);
+  });
+}
+
+async function deleteRecord(id, btn) {
+  btn.disabled = true;
+  try {
+    await fetch('/record/' + id, { method: 'DELETE' });
+    loadHistory();
+    showToast('削除しました');
+  } catch(e) {
+    showToast('削除に失敗しました', true);
+    btn.disabled = false;
+  }
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (isError ? ' error' : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.className = '', 3000);
+}
+</script>
+</body>
+</html>
