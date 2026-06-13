@@ -3,7 +3,7 @@ import base64
 import sqlite3
 import json
 from datetime import date
-from flask import Flask, request, jsonify, render_template, g, send_from_directory
+from flask import Flask, request, jsonify, g, send_from_directory
 from anthropic import Anthropic
 
 app = Flask(__name__)
@@ -43,17 +43,30 @@ def init_db():
     conn.close()
 
 
+PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "public")
+
+
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return send_from_directory(PUBLIC_DIR, "index.html")
 
 
-@app.route("/static/sw.js")
+@app.route("/sw.js")
 def service_worker():
-    response = send_from_directory("static", "sw.js")
+    response = send_from_directory(PUBLIC_DIR, "sw.js")
     response.headers["Content-Type"] = "application/javascript"
     response.headers["Service-Worker-Allowed"] = "/"
     return response
+
+
+@app.route("/manifest.json")
+def manifest():
+    return send_from_directory(PUBLIC_DIR, "manifest.json")
+
+
+@app.route("/icons/<path:filename>")
+def icons(filename):
+    return send_from_directory(os.path.join(PUBLIC_DIR, "icons"), filename)
 
 
 @app.route("/analyze", methods=["POST"])
@@ -158,4 +171,5 @@ def delete_record(record_id):
 
 if __name__ == "__main__":
     init_db()
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
