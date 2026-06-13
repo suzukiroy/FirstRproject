@@ -1,7 +1,7 @@
 {
   "hosting": {
     "public": "public",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "ignore": ["firebase.json", "**/.*"],
     "headers": [
       {
         "source": "/sw.js",
@@ -9,30 +9,6 @@
           { "key": "Service-Worker-Allowed", "value": "/" },
           { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
         ]
-      },
-      {
-        "source": "/manifest.json",
-        "headers": [
-          { "key": "Cache-Control", "value": "no-cache" }
-        ]
-      }
-    ],
-    "rewrites": [
-      {
-        "source": "/analyze",
-        "run": { "serviceId": "food-photo-logger", "region": "asia-northeast1" }
-      },
-      {
-        "source": "/save",
-        "run": { "serviceId": "food-photo-logger", "region": "asia-northeast1" }
-      },
-      {
-        "source": "/history",
-        "run": { "serviceId": "food-photo-logger", "region": "asia-northeast1" }
-      },
-      {
-        "source": "/record/**",
-        "run": { "serviceId": "food-photo-logger", "region": "asia-northeast1" }
       }
     ]
   }

@@ -8,74 +8,63 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="食材ログ">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="application-name" content="食材フォトログ">
 <meta name="description" content="写真から食材の種類・量・日付を記録">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <title>食材フォトログ</title>
 <style>
   :root {
-    --green: #22c55e;
-    --green-dark: #16a34a;
-    --green-light: #dcfce7;
-    --red: #ef4444;
-    --gray: #6b7280;
-    --gray-light: #f3f4f6;
-    --border: #e5e7eb;
-    --shadow: 0 1px 3px rgba(0,0,0,.1);
-    --radius: 12px;
+    --green: #22c55e; --green-dark: #16a34a; --green-light: #dcfce7;
+    --red: #ef4444; --gray: #6b7280; --gray-light: #f3f4f6;
+    --border: #e5e7eb; --radius: 12px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; }
 
-  /* Header */
   header { background: var(--green); color: #fff; padding: 16px 20px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(34,197,94,.3); }
-  header svg { width: 28px; height: 28px; flex-shrink: 0; }
-  header h1 { font-size: 1.2rem; font-weight: 700; }
+  header svg.logo { width: 28px; height: 28px; flex-shrink: 0; }
+  header h1 { font-size: 1.2rem; font-weight: 700; flex: 1; }
+  header button.gear { background: rgba(255,255,255,.2); border: none; border-radius: 8px; padding: 6px; cursor: pointer; color: #fff; line-height: 0; }
+  header button.gear:hover { background: rgba(255,255,255,.35); }
 
-  /* Tabs */
   .tabs { display: flex; background: #fff; border-bottom: 1px solid var(--border); position: sticky; top: 60px; z-index: 99; }
   .tab { flex: 1; padding: 14px; text-align: center; font-size: .9rem; font-weight: 600; color: var(--gray); cursor: pointer; border-bottom: 3px solid transparent; transition: .2s; }
   .tab.active { color: var(--green-dark); border-bottom-color: var(--green); }
 
-  /* Panels */
   .panel { display: none; padding: 20px; max-width: 600px; margin: 0 auto; }
   .panel.active { display: block; }
 
-  /* Camera area */
+  #install-banner { display: none; align-items: center; gap: 12px; background: #fff; border-bottom: 1px solid var(--border); padding: 12px 20px; }
+  #install-banner button.add { background: var(--green); color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: .85rem; font-weight: 600; cursor: pointer; }
+  #install-banner button.close { background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 4px; }
+
   .upload-area { border: 2px dashed var(--border); border-radius: var(--radius); text-align: center; padding: 32px 20px; background: #fff; cursor: pointer; transition: .2s; position: relative; }
   .upload-area:hover { border-color: var(--green); background: var(--green-light); }
   .upload-area input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
   .upload-area svg { width: 48px; height: 48px; color: var(--green); margin-bottom: 12px; }
-  .upload-area p { color: var(--gray); font-size: .9rem; }
   .upload-area strong { color: var(--green-dark); font-size: 1rem; display: block; margin-bottom: 6px; }
+  .upload-area p { color: var(--gray); font-size: .9rem; }
 
   #preview-wrap { display: none; margin-top: 16px; }
   #preview-wrap img { width: 100%; border-radius: var(--radius); max-height: 300px; object-fit: cover; }
 
-  /* Buttons */
   .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px; border: none; border-radius: var(--radius); font-size: 1rem; font-weight: 600; cursor: pointer; transition: .2s; margin-top: 12px; }
   .btn-primary { background: var(--green); color: #fff; }
   .btn-primary:hover { background: var(--green-dark); }
   .btn-primary:disabled { background: #94d3a2; cursor: not-allowed; }
   .btn-secondary { background: var(--gray-light); color: #374151; }
   .btn-secondary:hover { background: var(--border); }
-  .btn-danger { background: #fee2e2; color: var(--red); }
-  .btn-danger:hover { background: #fecaca; }
   .btn-sm { padding: 6px 12px; font-size: .8rem; width: auto; margin: 0; }
 
-  /* Date input */
   .date-row { display: flex; align-items: center; gap: 10px; margin-top: 16px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; }
   .date-row label { font-size: .85rem; font-weight: 600; color: var(--gray); white-space: nowrap; }
   .date-row input[type=date] { border: none; font-size: .95rem; flex: 1; outline: none; color: #1e293b; }
 
-  /* Spinner */
   .spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* Ingredient list */
   .section-title { font-size: .85rem; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .05em; margin: 20px 0 10px; }
-  .ingredient-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px; display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; }
+  .ingredient-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px; display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
   .ingredient-card .name-input { border: none; font-size: 1rem; font-weight: 600; color: #1e293b; outline: none; width: 100%; background: transparent; }
   .ingredient-card .qty-row { display: flex; gap: 6px; align-items: center; grid-column: 1 / -1; }
   .ingredient-card input[type=number] { width: 80px; border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: .9rem; }
@@ -86,7 +75,6 @@
   .add-row input { flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: .9rem; outline: none; }
   .add-row input:focus { border-color: var(--green); }
 
-  /* History */
   .history-date-group { margin-bottom: 20px; }
   .history-date-label { font-size: .85rem; font-weight: 700; color: var(--gray); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
   .history-date-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
@@ -94,30 +82,42 @@
   .history-item .info { flex: 1; }
   .history-item .name { font-weight: 600; font-size: .95rem; }
   .history-item .meta { font-size: .82rem; color: var(--gray); margin-top: 2px; }
-  .history-item .del-btn { color: #d1d5db; }
 
-  /* Toast */
   #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px); background: #1e293b; color: #fff; padding: 12px 20px; border-radius: 100px; font-size: .9rem; font-weight: 500; transition: .3s; z-index: 1000; white-space: nowrap; opacity: 0; }
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   #toast.error { background: var(--red); }
 
-  /* Empty state */
   .empty { text-align: center; padding: 48px 20px; color: var(--gray); }
-  .empty svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: .4; }
+  .empty svg { width: 48px; height: 48px; opacity: .4; display: block; margin: 0 auto 12px; }
 
-  /* API key warning */
-  .api-warn { background: #fff7ed; border: 1px solid #fed7aa; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px; font-size: .88rem; color: #9a3412; }
-  .api-warn strong { display: block; margin-bottom: 4px; }
+  .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200; align-items: flex-end; }
+  .modal-backdrop.open { display: flex; }
+  .modal { background: #fff; border-radius: 20px 20px 0 0; padding: 24px 20px 40px; width: 100%; max-width: 600px; margin: 0 auto; }
+  .modal h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; }
+  .modal p.desc { font-size: .85rem; color: var(--gray); margin-bottom: 20px; line-height: 1.5; }
+  .modal label { display: block; font-size: .85rem; font-weight: 600; color: var(--gray); margin-bottom: 6px; }
+  .modal input[type=password] { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: .95rem; outline: none; font-family: monospace; }
+  .modal input:focus { border-color: var(--green); }
+  .modal .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .key-status { font-size: .82rem; margin-top: 8px; height: 18px; }
+  .key-status.ok { color: var(--green-dark); }
+  .key-status.ng { color: var(--red); }
 </style>
 </head>
 <body>
 
 <header>
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <svg class="logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
     <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
     <polyline points="9 22 9 12 15 12 15 22"/>
   </svg>
   <h1>食材フォトログ</h1>
+  <button class="gear" onclick="openSettings()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+    </svg>
+  </button>
 </header>
 
 <div class="tabs">
@@ -131,25 +131,15 @@
   </div>
 </div>
 
-<!-- インストールバナー -->
-<div id="install-banner" style="display:none;align-items:center;gap:12px;background:#fff;border-bottom:1px solid #e5e7eb;padding:12px 20px;position:sticky;top:108px;z-index:98;">
+<div id="install-banner">
   <svg width="36" height="36" viewBox="0 0 36 36" style="flex-shrink:0"><rect width="36" height="36" rx="8" fill="#22c55e"/><path d="M18 10v12M12 16l6 6 6-6" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  <div style="flex:1;min-width:0">
-    <div style="font-weight:700;font-size:.9rem">ホーム画面に追加</div>
-    <div style="font-size:.8rem;color:#6b7280">アプリとして使えます</div>
-  </div>
-  <button onclick="installApp()" style="background:#22c55e;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:.85rem;font-weight:600;cursor:pointer;white-space:nowrap">追加</button>
-  <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:1.2rem;line-height:1;padding:4px">✕</button>
+  <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.9rem">ホーム画面に追加</div><div style="font-size:.8rem;color:#6b7280">アプリとして使えます</div></div>
+  <button class="add" onclick="installApp()">追加</button>
+  <button class="close" onclick="document.getElementById('install-banner').style.display='none'">✕</button>
 </div>
 
 <!-- 記録パネル -->
 <div class="panel active" id="panel-record">
-
-  <div id="api-key-warning" class="api-warn" style="display:none">
-    <strong>⚠️ ANTHROPIC_API_KEY が設定されていません</strong>
-    環境変数 <code>ANTHROPIC_API_KEY</code> を設定してからサーバーを再起動してください。
-  </div>
-
   <label class="upload-area" id="upload-area">
     <input type="file" accept="image/*" capture="environment" id="file-input" onchange="onFileSelect(this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -190,36 +180,107 @@
 
 <!-- 履歴パネル -->
 <div class="panel" id="panel-history">
-  <div id="history-content">
-    <div class="empty">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4.5"/><polyline points="3 3 3 8 8 8"/></svg>
-      <p>まだ記録がありません</p>
+  <div id="history-content"></div>
+</div>
+
+<!-- 設定モーダル -->
+<div class="modal-backdrop" id="settings-modal" onclick="if(event.target===this)closeSettings()">
+  <div class="modal">
+    <h2>設定</h2>
+    <p class="desc">Anthropic APIキーを入力してください。キーはこのデバイスのみに保存され、外部サーバーには送信されません。</p>
+    <label>APIキー</label>
+    <input type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+    <div id="key-status" class="key-status"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="saveSettings()" style="margin-top:0">保存</button>
+      <button class="btn btn-secondary" onclick="closeSettings()" style="margin-top:0">閉じる</button>
     </div>
+    <p style="font-size:.75rem;color:#9ca3af;margin-top:16px;line-height:1.5">
+      APIキーは <a href="https://console.anthropic.com/" target="_blank" style="color:var(--green-dark)">console.anthropic.com</a> で取得できます。
+    </p>
   </div>
 </div>
 
 <div id="toast"></div>
 
 <script>
+const STORAGE_KEY = 'food-log-records';
+const API_KEY_STORAGE = 'food-log-api-key';
+const CLAUDE_API = 'https://api.anthropic.com/v1/messages';
+
 let selectedFile = null;
 let ingredients = [];
 
-// 今日の日付をセット
-document.getElementById('record-date').value = new Date().toISOString().slice(0,10);
+document.getElementById('record-date').value = new Date().toISOString().slice(0, 10);
 
-function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0) === (tab==='record')));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('panel-' + tab).classList.add('active');
-  if (tab === 'history') loadHistory();
+window.addEventListener('load', () => {
+  if (!localStorage.getItem(API_KEY_STORAGE)) openSettings();
+  renderHistory();
+});
+
+// ---- Settings ----
+function openSettings() {
+  const key = localStorage.getItem(API_KEY_STORAGE) || '';
+  document.getElementById('api-key-input').value = key;
+  updateKeyStatus(key);
+  document.getElementById('settings-modal').classList.add('open');
+}
+function closeSettings() { document.getElementById('settings-modal').classList.remove('open'); }
+
+function updateKeyStatus(key) {
+  const el = document.getElementById('key-status');
+  if (!key) { el.textContent = ''; el.className = 'key-status'; return; }
+  if (key.startsWith('sk-ant-')) {
+    el.textContent = '✓ キーが設定されています';
+    el.className = 'key-status ok';
+  } else {
+    el.textContent = '⚠ sk-ant- で始まるキーを確認してください';
+    el.className = 'key-status ng';
+  }
+}
+document.getElementById('api-key-input').addEventListener('input', e => updateKeyStatus(e.target.value.trim()));
+
+function saveSettings() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key) { showToast('APIキーを入力してください', true); return; }
+  localStorage.setItem(API_KEY_STORAGE, key);
+  closeSettings();
+  showToast('APIキーを保存しました');
 }
 
+// ---- Image resize ----
+function resizeImage(file, maxPx = 1024) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (w > maxPx || h > maxPx) {
+        if (w > h) { h = Math.round(h * maxPx / w); w = maxPx; }
+        else { w = Math.round(w * maxPx / h); h = maxPx; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob(resolve, 'image/jpeg', 0.85);
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+function blobToBase64(blob) {
+  return new Promise(resolve => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result.split(',')[1]);
+    r.readAsDataURL(blob);
+  });
+}
+
+// ---- Upload ----
 function onFileSelect(input) {
   const file = input.files[0];
   if (!file) return;
   selectedFile = file;
-  const url = URL.createObjectURL(file);
-  document.getElementById('preview-img').src = url;
+  document.getElementById('preview-img').src = URL.createObjectURL(file);
   document.getElementById('preview-wrap').style.display = 'block';
   document.getElementById('upload-area').style.display = 'none';
   document.getElementById('ingredients-section').style.display = 'none';
@@ -232,34 +293,59 @@ function resetUpload() {
   document.getElementById('preview-wrap').style.display = 'none';
   document.getElementById('upload-area').style.display = '';
   document.getElementById('ingredients-section').style.display = 'none';
-  document.getElementById('preview-img').src = '';
   ingredients = [];
 }
 
+// ---- Analyze ----
 async function analyzeImage() {
+  const apiKey = localStorage.getItem(API_KEY_STORAGE);
+  if (!apiKey) { openSettings(); showToast('まずAPIキーを設定してください', true); return; }
   if (!selectedFile) return;
+
   const btn = document.getElementById('analyze-btn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> 解析中...';
 
   try {
-    const form = new FormData();
-    form.append('image', selectedFile);
-    const res = await fetch('/analyze', { method: 'POST', body: form });
-    const data = await res.json();
+    const resized = await resizeImage(selectedFile);
+    const b64 = await blobToBase64(resized);
 
-    if (data.error) {
-      showToast(data.error, true);
+    const res = await fetch(CLAUDE_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 } },
+            { type: 'text', text: 'この写真の食材をJSON形式のみで返してください。{"ingredients":[{"name":"食材名","quantity":数値またはnull,"unit":"単位（g/個/本/枚/袋/パック/束など）"}]}' }
+          ]
+        }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      if (res.status === 401) { openSettings(); showToast('APIキーが無効です。確認してください', true); }
+      else showToast(err.error?.message || `エラー (${res.status})`, true);
       return;
     }
 
-    ingredients = data.ingredients || [];
+    const data = await res.json();
+    let text = data.content[0].text.trim();
+    if (text.includes('```')) { text = text.split('```')[1]; if (text.startsWith('json')) text = text.slice(4); }
+    ingredients = JSON.parse(text).ingredients || [];
     renderIngredients();
     document.getElementById('ingredients-section').style.display = 'block';
-    if (ingredients.length === 0) {
-      showToast('食材が検出されませんでした。手動で追加してください。');
-    }
-  } catch(e) {
+    if (!ingredients.length) showToast('食材が検出されませんでした。手動で追加できます');
+  } catch (e) {
     showToast('解析に失敗しました: ' + e.message, true);
   } finally {
     btn.disabled = false;
@@ -267,6 +353,7 @@ async function analyzeImage() {
   }
 }
 
+// ---- Ingredient list ----
 function renderIngredients() {
   const list = document.getElementById('ingredient-list');
   list.innerHTML = '';
@@ -275,22 +362,18 @@ function renderIngredients() {
     card.className = 'ingredient-card';
     card.innerHTML = `
       <input class="name-input" value="${esc(item.name)}" oninput="ingredients[${i}].name=this.value" placeholder="食材名">
-      <button class="del-btn" onclick="removeIngredient(${i})" title="削除">
+      <button class="del-btn" onclick="removeIngredient(${i})">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
       <div class="qty-row">
         <input type="number" min="0" step="0.1" value="${item.quantity ?? ''}" oninput="ingredients[${i}].quantity=this.value?parseFloat(this.value):null" placeholder="量">
         <input class="unit-input" value="${esc(item.unit||'')}" oninput="ingredients[${i}].unit=this.value" placeholder="単位">
-      </div>
-    `;
+      </div>`;
     list.appendChild(card);
   });
 }
 
-function removeIngredient(i) {
-  ingredients.splice(i, 1);
-  renderIngredients();
-}
+function removeIngredient(i) { ingredients.splice(i, 1); renderIngredients(); }
 
 function addIngredient() {
   const input = document.getElementById('new-ingredient-name');
@@ -301,102 +384,98 @@ function addIngredient() {
   input.value = '';
 }
 
-async function saveRecords() {
-  if (ingredients.length === 0) { showToast('食材がありません', true); return; }
-  const validItems = ingredients.filter(i => i.name.trim());
-  if (validItems.length === 0) { showToast('食材名を入力してください', true); return; }
-
+// ---- Save ----
+function saveRecords() {
+  const valid = ingredients.filter(i => i.name.trim());
+  if (!valid.length) { showToast('食材名を入力してください', true); return; }
   const recordDate = document.getElementById('record-date').value;
-  try {
-    const res = await fetch('/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date: recordDate, ingredients: validItems })
-    });
-    const data = await res.json();
-    if (data.error) { showToast(data.error, true); return; }
-    showToast(`${data.saved}件の食材を保存しました！`);
-    resetUpload();
-    document.getElementById('ingredients-section').style.display = 'none';
-    ingredients = [];
-  } catch(e) {
-    showToast('保存に失敗しました', true);
-  }
+  const records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  valid.forEach(item => records.push({
+    id: Date.now() + Math.random(),
+    record_date: recordDate,
+    ingredient: item.name.trim(),
+    quantity: item.quantity ?? null,
+    unit: item.unit || '',
+    created_at: new Date().toISOString()
+  }));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  showToast(`${valid.length}件の食材を保存しました！`);
+  resetUpload();
+  document.getElementById('ingredients-section').style.display = 'none';
+  ingredients = [];
 }
 
-async function loadHistory() {
-  try {
-    const res = await fetch('/history');
-    const records = await res.json();
-    renderHistory(records);
-  } catch(e) {
-    document.getElementById('history-content').innerHTML = '<div class="empty"><p>読み込みに失敗しました</p></div>';
-  }
+// ---- History ----
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', (i === 0) === (tab === 'record')));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  if (tab === 'history') renderHistory();
 }
 
-function renderHistory(records) {
+function renderHistory() {
+  const records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
   const el = document.getElementById('history-content');
   if (!records.length) {
     el.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4.5"/><polyline points="3 3 3 8 8 8"/></svg><p>まだ記録がありません</p></div>';
     return;
   }
-
-  // 日付でグループ化
   const groups = {};
-  records.forEach(r => {
-    if (!groups[r.record_date]) groups[r.record_date] = [];
-    groups[r.record_date].push(r);
-  });
-
+  [...records].reverse().forEach(r => { (groups[r.record_date] = groups[r.record_date] || []).push(r); });
   el.innerHTML = '';
   Object.keys(groups).sort().reverse().forEach(dateKey => {
-    const group = document.createElement('div');
-    group.className = 'history-date-group';
-    const label = document.createElement('div');
-    label.className = 'history-date-label';
-    label.textContent = formatDate(dateKey);
-    group.appendChild(label);
-
+    const g = document.createElement('div');
+    g.className = 'history-date-group';
+    g.innerHTML = `<div class="history-date-label">${formatDate(dateKey)}</div>`;
     groups[dateKey].forEach(r => {
+      const qty = r.quantity != null ? `${r.quantity}${r.unit || ''}` : (r.unit || '量不明');
       const item = document.createElement('div');
       item.className = 'history-item';
-      const qty = r.quantity != null ? `${r.quantity}${r.unit || ''}` : (r.unit || '不明');
       item.innerHTML = `
-        <div class="info">
-          <div class="name">${esc(r.ingredient)}</div>
-          <div class="meta">${qty}</div>
-        </div>
-        <button class="del-btn" onclick="deleteRecord(${r.id}, this)" title="削除">
+        <div class="info"><div class="name">${esc(r.ingredient)}</div><div class="meta">${qty}</div></div>
+        <button class="del-btn" onclick="deleteRecord('${r.id}', this)">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-        </button>
-      `;
-      group.appendChild(item);
+        </button>`;
+      g.appendChild(item);
     });
-    el.appendChild(group);
+    el.appendChild(g);
   });
 }
 
-async function deleteRecord(id, btn) {
+function deleteRecord(id, btn) {
   btn.disabled = true;
-  try {
-    await fetch('/record/' + id, { method: 'DELETE' });
-    loadHistory();
-    showToast('削除しました');
-  } catch(e) {
-    showToast('削除に失敗しました', true);
-    btn.disabled = false;
-  }
+  const records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]').filter(r => String(r.id) !== String(id));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  renderHistory();
+  showToast('削除しました');
 }
 
-function formatDate(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+// ---- PWA ----
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
 }
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+  document.getElementById('install-banner').style.display = 'flex';
+});
+function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(() => { deferredPrompt = null; document.getElementById('install-banner').style.display = 'none'; });
+}
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner').style.display = 'none';
+  showToast('アプリをインストールしました！');
+});
 
+// ---- Util ----
+function formatDate(s) {
+  return new Date(s + 'T00:00:00').toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+}
 function esc(s) {
-  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
-
 function showToast(msg, isError = false) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -404,39 +483,6 @@ function showToast(msg, isError = false) {
   clearTimeout(t._timer);
   t._timer = setTimeout(() => t.className = '', 3000);
 }
-
-// PWA: Service Worker 登録
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .catch(err => console.warn('SW registration failed:', err));
-  });
-}
-
-// PWA: インストールバナー
-let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  const banner = document.getElementById('install-banner');
-  if (banner) banner.style.display = 'flex';
-});
-
-function installApp() {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  deferredPrompt.userChoice.then(() => {
-    deferredPrompt = null;
-    const banner = document.getElementById('install-banner');
-    if (banner) banner.style.display = 'none';
-  });
-}
-
-window.addEventListener('appinstalled', () => {
-  const banner = document.getElementById('install-banner');
-  if (banner) banner.style.display = 'none';
-  showToast('アプリをインストールしました！');
-});
 </script>
 </body>
 </html>
