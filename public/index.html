@@ -102,6 +102,29 @@
   .key-status { font-size: .82rem; margin-top: 8px; height: 18px; }
   .key-status.ok { color: var(--green-dark); }
   .key-status.ng { color: var(--red); }
+
+  /* Stock tab */
+  .action-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+  .btn-warning { background: #f97316; color: #fff; }
+  .btn-warning:hover { background: #ea580c; }
+  .btn-warning:disabled { background: #fdba74; cursor: not-allowed; }
+
+  .stock-item { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+  .stock-item input[type=checkbox] { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--green); }
+  .stock-item .info { flex: 1; min-width: 0; }
+  .stock-item .name { font-weight: 600; font-size: .95rem; }
+  .stock-item .meta { font-size: .78rem; color: var(--gray); margin-top: 2px; }
+  .badge { font-size: .72rem; font-weight: 700; padding: 3px 8px; border-radius: 100px; white-space: nowrap; flex-shrink: 0; }
+  .badge-expired { background: #fee2e2; color: var(--red); }
+  .badge-soon { background: #ffedd5; color: #c2410c; }
+  .badge-ok { background: var(--green-light); color: var(--green-dark); }
+
+  .recipe-appliance-label { font-size: .85rem; font-weight: 700; color: var(--green-dark); margin: 18px 0 8px; display: flex; align-items: center; gap: 6px; }
+  .recipe-appliance-label:first-child { margin-top: 0; }
+  .recipe-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px; }
+  .recipe-card .recipe-name { font-weight: 700; font-size: 1rem; margin-bottom: 6px; }
+  .recipe-card .recipe-veggies { font-size: .8rem; color: var(--gray); margin-bottom: 10px; }
+  .recipe-card ol { padding-left: 20px; font-size: .85rem; line-height: 1.6; }
 </style>
 </head>
 <body>
@@ -125,9 +148,9 @@
     <svg style="width:16px;height:16px;vertical-align:middle;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
     記録する
   </div>
-  <div class="tab" onclick="switchTab('history')">
-    <svg style="width:16px;height:16px;vertical-align:middle;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4.5"/><polyline points="3 3 3 8 8 8"/></svg>
-    履歴
+  <div class="tab" onclick="switchTab('stock')">
+    <svg style="width:16px;height:16px;vertical-align:middle;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
+    在庫
   </div>
 </div>
 
@@ -147,28 +170,28 @@
       <circle cx="12" cy="13" r="4"/>
     </svg>
     <strong>写真を撮影 / 選択</strong>
-    <p>スマホカメラまたはファイルから選択</p>
+    <p>買ってきた野菜をまとめて撮影できます</p>
   </label>
 
   <div id="preview-wrap">
     <img id="preview-img" src="" alt="プレビュー">
     <button class="btn btn-primary" id="analyze-btn" onclick="analyzeImage()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      食材を解析する
+      野菜を解析する
     </button>
     <button class="btn btn-secondary" onclick="resetUpload()">やり直す</button>
   </div>
 
   <div class="date-row">
-    <label>📅 日付</label>
+    <label>📅 購入日</label>
     <input type="date" id="record-date">
   </div>
 
   <div id="ingredients-section" style="display:none">
-    <p class="section-title">検出された食材（編集可）</p>
+    <p class="section-title">検出された野菜（編集可）</p>
     <div id="ingredient-list"></div>
     <div class="add-row">
-      <input type="text" id="new-ingredient-name" placeholder="食材を追加..." onkeydown="if(event.key==='Enter')addIngredient()">
+      <input type="text" id="new-ingredient-name" placeholder="野菜を追加..." onkeydown="if(event.key==='Enter')addIngredient()">
       <button class="btn btn-secondary btn-sm" onclick="addIngredient()">追加</button>
     </div>
     <button class="btn btn-primary" onclick="saveRecords()" style="margin-top:16px">
@@ -178,9 +201,30 @@
   </div>
 </div>
 
-<!-- 履歴パネル -->
-<div class="panel" id="panel-history">
-  <div id="history-content"></div>
+<!-- 在庫パネル -->
+<div class="panel" id="panel-stock">
+  <div class="action-row">
+    <button class="btn btn-primary" id="suggest-btn" onclick="suggestRecipes(false)" style="margin-top:0">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11h18M3 11a9 9 0 0118 0M3 11v6a2 2 0 002 2h14a2 2 0 002-2v-6M8 6V3M12 6V3M16 6V3"/></svg>
+      料理のおすすめ
+    </button>
+    <button class="btn btn-warning" id="expiring-btn" onclick="suggestRecipes(true)" style="margin-top:0">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      期限の近い野菜
+    </button>
+  </div>
+
+  <div id="recipe-results" style="display:none; margin-bottom:24px">
+    <p class="section-title">提案レシピ</p>
+    <div id="recipe-list"></div>
+  </div>
+
+  <p class="section-title">在庫一覧</p>
+  <div id="stock-list"></div>
+  <button class="btn btn-secondary" id="mark-used-btn" onclick="markUsedSelected()" style="display:none">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+    選択した野菜を使用済みにする
+  </button>
 </div>
 
 <!-- 設定モーダル -->
@@ -207,6 +251,38 @@
 const STORAGE_KEY = 'food-log-records';
 const API_KEY_STORAGE = 'food-log-api-key';
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages';
+const EXPIRY_WARNING_DAYS = 3;
+const DEFAULT_SHELF_LIFE = 7;
+const APPLIANCE_ORDER = ['Panasonicビストロ', 'Panasonicオートクッカー', 'ビタクラフト'];
+
+// 野菜ごとの目安賞味期限（日）。該当しない野菜はDEFAULT_SHELF_LIFEを使用。
+const VEGETABLE_SHELF_LIFE = {
+  'キャベツ': 14, 'レタス': 7, 'トマト': 7, 'ミニトマト': 10, 'きゅうり': 5, 'なす': 5,
+  'ピーマン': 7, 'パプリカ': 10, 'にんじん': 14, '大根': 14, 'じゃがいも': 30, 'さつまいも': 21,
+  '玉ねぎ': 30, '長ねぎ': 10, 'ねぎ': 10, 'ほうれん草': 4, '小松菜': 4, '白菜': 14,
+  'ブロッコリー': 5, 'カリフラワー': 7, 'もやし': 3, 'しいたけ': 7, 'しめじ': 7, 'えのき': 7,
+  'まいたけ': 7, 'きのこ': 7, 'アスパラガス': 5, 'ごぼう': 14, 'れんこん': 10, 'かぼちゃ': 14,
+  'にんにく': 30, 'しょうが': 21, 'セロリ': 10, 'パセリ': 7, 'バジル': 5, 'とうもろこし': 3,
+  'オクラ': 5, 'ズッキーニ': 7, 'かぶ': 7, 'ゴーヤ': 7
+};
+
+function getShelfLifeDays(name) {
+  if (VEGETABLE_SHELF_LIFE[name] != null) return VEGETABLE_SHELF_LIFE[name];
+  const match = Object.keys(VEGETABLE_SHELF_LIFE).find(k => name.includes(k) || k.includes(name));
+  return match ? VEGETABLE_SHELF_LIFE[match] : DEFAULT_SHELF_LIFE;
+}
+
+function addDays(dateStr, days) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function daysUntil(dateStr) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr + 'T00:00:00');
+  return Math.round((target - today) / 86400000);
+}
 
 let selectedFile = null;
 let ingredients = [];
@@ -215,7 +291,7 @@ document.getElementById('record-date').value = new Date().toISOString().slice(0,
 
 window.addEventListener('load', () => {
   if (!localStorage.getItem(API_KEY_STORAGE)) openSettings();
-  renderHistory();
+  renderStock();
 });
 
 // ---- Settings ----
@@ -325,7 +401,7 @@ async function analyzeImage() {
           role: 'user',
           content: [
             { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 } },
-            { type: 'text', text: 'この写真の食材をJSON形式のみで返してください。{"ingredients":[{"name":"食材名","quantity":数値またはnull,"unit":"単位（g/個/本/枚/袋/パック/束など）"}]}' }
+            { type: 'text', text: 'この写真に写っている野菜を全て検出してください。JSON形式のみで返してください。{"ingredients":[{"name":"野菜名","quantity":数値またはnull,"unit":"単位（g/個/本/枚/袋/パック/束など）"}]}' }
           ]
         }]
       })
@@ -344,12 +420,12 @@ async function analyzeImage() {
     ingredients = JSON.parse(text).ingredients || [];
     renderIngredients();
     document.getElementById('ingredients-section').style.display = 'block';
-    if (!ingredients.length) showToast('食材が検出されませんでした。手動で追加できます');
+    if (!ingredients.length) showToast('野菜が検出されませんでした。手動で追加できます');
   } catch (e) {
     showToast('解析に失敗しました: ' + e.message, true);
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> 食材を解析する';
+    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> 野菜を解析する';
   }
 }
 
@@ -361,7 +437,7 @@ function renderIngredients() {
     const card = document.createElement('div');
     card.className = 'ingredient-card';
     card.innerHTML = `
-      <input class="name-input" value="${esc(item.name)}" oninput="ingredients[${i}].name=this.value" placeholder="食材名">
+      <input class="name-input" value="${esc(item.name)}" oninput="ingredients[${i}].name=this.value" placeholder="野菜名">
       <button class="del-btn" onclick="removeIngredient(${i})">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
@@ -387,67 +463,202 @@ function addIngredient() {
 // ---- Save ----
 function saveRecords() {
   const valid = ingredients.filter(i => i.name.trim());
-  if (!valid.length) { showToast('食材名を入力してください', true); return; }
+  if (!valid.length) { showToast('野菜名を入力してください', true); return; }
   const recordDate = document.getElementById('record-date').value;
   const records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  valid.forEach(item => records.push({
-    id: Date.now() + Math.random(),
-    record_date: recordDate,
-    ingredient: item.name.trim(),
-    quantity: item.quantity ?? null,
-    unit: item.unit || '',
-    created_at: new Date().toISOString()
-  }));
+  valid.forEach(item => {
+    const name = item.name.trim();
+    records.push({
+      id: Date.now() + Math.random(),
+      record_date: recordDate,
+      ingredient: name,
+      quantity: item.quantity ?? null,
+      unit: item.unit || '',
+      expiry_date: addDays(recordDate, getShelfLifeDays(name)),
+      created_at: new Date().toISOString()
+    });
+  });
   localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-  showToast(`${valid.length}件の食材を保存しました！`);
+  showToast(`${valid.length}件の野菜を保存しました！`);
   resetUpload();
   document.getElementById('ingredients-section').style.display = 'none';
   ingredients = [];
 }
 
-// ---- History ----
+// ---- Stock ----
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', (i === 0) === (tab === 'record')));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-' + tab).classList.add('active');
-  if (tab === 'history') renderHistory();
+  if (tab === 'stock') renderStock();
 }
 
-function renderHistory() {
+function renderStock() {
   const records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  const el = document.getElementById('history-content');
+  const el = document.getElementById('stock-list');
+  const markBtn = document.getElementById('mark-used-btn');
+
   if (!records.length) {
-    el.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4.5"/><polyline points="3 3 3 8 8 8"/></svg><p>まだ記録がありません</p></div>';
+    el.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg><p>在庫はありません</p></div>';
+    markBtn.style.display = 'none';
     return;
   }
-  const groups = {};
-  [...records].reverse().forEach(r => { (groups[r.record_date] = groups[r.record_date] || []).push(r); });
+  markBtn.style.display = '';
+
+  const sorted = [...records].sort((a, b) => (a.expiry_date || '').localeCompare(b.expiry_date || ''));
   el.innerHTML = '';
-  Object.keys(groups).sort().reverse().forEach(dateKey => {
-    const g = document.createElement('div');
-    g.className = 'history-date-group';
-    g.innerHTML = `<div class="history-date-label">${formatDate(dateKey)}</div>`;
-    groups[dateKey].forEach(r => {
-      const qty = r.quantity != null ? `${r.quantity}${r.unit || ''}` : (r.unit || '量不明');
-      const item = document.createElement('div');
-      item.className = 'history-item';
-      item.innerHTML = `
-        <div class="info"><div class="name">${esc(r.ingredient)}</div><div class="meta">${qty}</div></div>
-        <button class="del-btn" onclick="deleteRecord('${r.id}', this)">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-        </button>`;
-      g.appendChild(item);
-    });
-    el.appendChild(g);
+  sorted.forEach(r => {
+    const d = r.expiry_date ? daysUntil(r.expiry_date) : null;
+    let badgeClass = 'badge-ok', badgeText = '-';
+    if (d != null) {
+      if (d < 0) { badgeClass = 'badge-expired'; badgeText = `期限切れ(${-d}日前)`; }
+      else if (d <= EXPIRY_WARNING_DAYS) { badgeClass = 'badge-soon'; badgeText = `あと${d}日`; }
+      else { badgeText = `あと${d}日`; }
+    }
+    const qty = r.quantity != null ? `${r.quantity}${r.unit || ''}` : (r.unit || '');
+    const row = document.createElement('div');
+    row.className = 'stock-item';
+    row.innerHTML = `
+      <input type="checkbox" class="stock-check" value="${r.id}">
+      <div class="info">
+        <div class="name">${esc(r.ingredient)}${qty ? ` <span style="color:var(--gray);font-weight:400;font-size:.85rem">(${esc(qty)})</span>` : ''}</div>
+        <div class="meta">購入: ${r.record_date} ・ 期限: ${r.expiry_date || '-'}</div>
+      </div>
+      <span class="badge ${badgeClass}">${badgeText}</span>
+      <button class="del-btn" onclick="deleteStockItem('${r.id}')" title="削除">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+      </button>`;
+    el.appendChild(row);
   });
 }
 
-function deleteRecord(id, btn) {
-  btn.disabled = true;
+function deleteStockItem(id) {
   const records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]').filter(r => String(r.id) !== String(id));
   localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-  renderHistory();
+  renderStock();
   showToast('削除しました');
+}
+
+function markUsedSelected() {
+  const checked = [...document.querySelectorAll('.stock-check:checked')].map(c => c.value);
+  if (!checked.length) { showToast('使用した野菜を選択してください', true); return; }
+  const records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]').filter(r => !checked.includes(String(r.id)));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  renderStock();
+  showToast(`${checked.length}件を使用済みにしました`);
+}
+
+// ---- Recipe suggestions ----
+async function suggestRecipes(urgentOnly) {
+  const apiKey = localStorage.getItem(API_KEY_STORAGE);
+  if (!apiKey) { openSettings(); showToast('まずAPIキーを設定してください', true); return; }
+
+  const records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  let targets = records;
+  if (urgentOnly) {
+    targets = records.filter(r => r.expiry_date && daysUntil(r.expiry_date) <= EXPIRY_WARNING_DAYS);
+    if (!targets.length) { showToast('期限が近い野菜はありません'); return; }
+  } else if (!targets.length) {
+    showToast('在庫がありません', true);
+    return;
+  }
+
+  const btn = document.getElementById(urgentOnly ? 'expiring-btn' : 'suggest-btn');
+  const otherBtn = document.getElementById(urgentOnly ? 'suggest-btn' : 'expiring-btn');
+  const originalHtml = btn.innerHTML;
+  btn.disabled = true; otherBtn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> レシピを考えています...';
+
+  try {
+    const lines = targets.map(r => {
+      const qty = r.quantity != null ? `${r.quantity}${r.unit || ''}` : (r.unit || '適量');
+      return `- ${r.ingredient} ${qty}（購入日:${r.record_date}, 期限:${r.expiry_date}）`;
+    }).join('\n');
+
+    const prompt = `次の野菜を使った料理を提案してください。
+
+【手持ちの野菜】
+${lines}
+
+【条件】
+- 使用する調理器具ごとに提案を分け、必ず次の順番で出力してください:
+  1. Panasonicビストロ（オーブンレンジ）
+  2. Panasonicオートクッカー
+  3. ビタクラフト（鍋・フライパンなどの通常調理器具）
+- 各調理器具について1〜2件のレシピを提案してください
+${urgentOnly ? '- これらの野菜は期限が近い、または過ぎています。必ず使い切るレシピにしてください\n' : ''}- 以下のJSON形式のみで返答してください（説明文不要）:
+{"recipes":[{"appliance":"Panasonicビストロ","name":"レシピ名","vegetables_used":["野菜名"],"steps":["手順1","手順2"]}]}`;
+
+    const res = await fetch(CLAUDE_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2048,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      if (res.status === 401) { openSettings(); showToast('APIキーが無効です', true); }
+      else showToast(err.error?.message || `エラー (${res.status})`, true);
+      return;
+    }
+
+    const data = await res.json();
+    let text = data.content[0].text.trim();
+    if (text.includes('```')) { text = text.split('```')[1]; if (text.startsWith('json')) text = text.slice(4); }
+    const recipes = JSON.parse(text).recipes || [];
+    renderRecipes(recipes);
+  } catch (e) {
+    showToast('レシピ提案に失敗しました: ' + e.message, true);
+  } finally {
+    btn.disabled = false; otherBtn.disabled = false;
+    btn.innerHTML = originalHtml;
+  }
+}
+
+function renderRecipes(recipes) {
+  const sorted = [...recipes].sort((a, b) => {
+    const ai = APPLIANCE_ORDER.findIndex(x => (a.appliance || '').includes(x) || x.includes(a.appliance || ''));
+    const bi = APPLIANCE_ORDER.findIndex(x => (b.appliance || '').includes(x) || x.includes(b.appliance || ''));
+    return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
+  });
+
+  const el = document.getElementById('recipe-list');
+  el.innerHTML = '';
+  if (!sorted.length) {
+    el.innerHTML = '<p style="color:var(--gray);font-size:.9rem">レシピが見つかりませんでした</p>';
+  } else {
+    let lastAppliance = null;
+    sorted.forEach(r => {
+      if (r.appliance !== lastAppliance) {
+        const label = document.createElement('div');
+        label.className = 'recipe-appliance-label';
+        label.textContent = r.appliance;
+        el.appendChild(label);
+        lastAppliance = r.appliance;
+      }
+      const card = document.createElement('div');
+      card.className = 'recipe-card';
+      const veggies = (r.vegetables_used || []).map(esc).join('、');
+      const steps = (r.steps || []).map(s => `<li>${esc(s)}</li>`).join('');
+      card.innerHTML = `
+        <div class="recipe-name">${esc(r.name)}</div>
+        <div class="recipe-veggies">使用する野菜: ${veggies}</div>
+        <ol>${steps}</ol>`;
+      el.appendChild(card);
+    });
+  }
+  const results = document.getElementById('recipe-results');
+  results.style.display = 'block';
+  results.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ---- PWA ----
@@ -470,9 +681,6 @@ window.addEventListener('appinstalled', () => {
 });
 
 // ---- Util ----
-function formatDate(s) {
-  return new Date(s + 'T00:00:00').toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
-}
 function esc(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }

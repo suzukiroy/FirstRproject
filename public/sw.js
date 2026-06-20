@@ -16,21 +16,7 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
-
-  // API呼び出し（/analyze, /save, /history, /record/）はネットワーク優先
-  if (['/analyze', '/save', '/history'].includes(url.pathname) || url.pathname.startsWith('/record/')) {
-    e.respondWith(
-      fetch(e.request).catch(() =>
-        new Response(JSON.stringify({ error: 'オフラインです。ネットワーク接続を確認してください。' }), {
-          headers: { 'Content-Type': 'application/json' }
-        })
-      )
-    );
-    return;
-  }
-
-  // その他（ページ・静的ファイル）はキャッシュ優先
+  // ページ・静的ファイルはキャッシュ優先（Claude API呼び出しはService Workerを経由しない）
   e.respondWith(
     caches.match(e.request).then(cached => {
       const network = fetch(e.request).then(res => {
